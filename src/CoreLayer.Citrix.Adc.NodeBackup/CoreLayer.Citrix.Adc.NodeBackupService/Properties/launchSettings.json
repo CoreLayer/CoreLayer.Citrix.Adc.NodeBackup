@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "CoreLayer.Citrix.Adc.NodeBackupService": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

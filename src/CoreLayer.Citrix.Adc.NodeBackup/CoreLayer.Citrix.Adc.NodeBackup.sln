@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLayer.Citrix.Adc.NodeBackupWorker", "CoreLayer.Citrix.Adc.NodeBackupWorker\CoreLayer.Citrix.Adc.NodeBackupWorker.csproj", "{007DFA04-D28C-4A5A-AB84-97F9ED595722}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLayer.Citrix.Adc.NodeBackupWorkerTests", "CoreLayer.Citrix.Adc.NodeBackupWorkerTests\CoreLayer.Citrix.Adc.NodeBackupWorkerTests.csproj", "{7629DC34-4C86-4F68-854A-4B3FA480BB46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreLayer.Citrix.Adc.NodeBackupService", "CoreLayer.Citrix.Adc.NodeBackupService\CoreLayer.Citrix.Adc.NodeBackupService.csproj", "{21C2EFEC-2FF0-4569-AA44-FE23ED83B720}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{007DFA04-D28C-4A5A-AB84-97F9ED595722}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{007DFA04-D28C-4A5A-AB84-97F9ED595722}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{007DFA04-D28C-4A5A-AB84-97F9ED595722}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{007DFA04-D28C-4A5A-AB84-97F9ED595722}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7629DC34-4C86-4F68-854A-4B3FA480BB46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7629DC34-4C86-4F68-854A-4B3FA480BB46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7629DC34-4C86-4F68-854A-4B3FA480BB46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7629DC34-4C86-4F68-854A-4B3FA480BB46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C2EFEC-2FF0-4569-AA44-FE23ED83B720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C2EFEC-2FF0-4569-AA44-FE23ED83B720}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C2EFEC-2FF0-4569-AA44-FE23ED83B720}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C2EFEC-2FF0-4569-AA44-FE23ED83B720}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
