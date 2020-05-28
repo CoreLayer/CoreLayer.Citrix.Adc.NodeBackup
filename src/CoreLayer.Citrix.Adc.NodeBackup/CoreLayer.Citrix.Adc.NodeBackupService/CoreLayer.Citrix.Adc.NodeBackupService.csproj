@@ -12,4 +12,11 @@
     <ItemGroup>
       <ProjectReference Include="..\CoreLayer.Citrix.Adc.NodeBackupWorker\CoreLayer.Citrix.Adc.NodeBackupWorker.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="appsettings.Development.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+    </ItemGroup>
 </Project>
