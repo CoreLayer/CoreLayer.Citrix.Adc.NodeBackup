@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace CoreLayer.Citrix.Adc.NodeBackupWorker.Configuration
 {
     public class PrometheusMetricsServerConfiguration
