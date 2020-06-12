@@ -10,7 +10,9 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker.Configuration
         public string NodeName { get; set; }
         
         public Uri NodeAddress { get; set; }
-        public NitroHttpClientCertificateValidation CertificateValidation { get; set; }
+
+        public NitroHttpClientCertificateValidation CertificateValidation { get; set; } =
+            NitroHttpClientCertificateValidation.Enabled;
         
         public string Username { get; set; }
         public string Password { get; set; }
