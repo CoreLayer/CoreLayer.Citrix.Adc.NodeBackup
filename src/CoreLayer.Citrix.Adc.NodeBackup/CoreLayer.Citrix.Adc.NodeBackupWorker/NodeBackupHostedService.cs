@@ -90,9 +90,10 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker
 
             // Start embedded Prometheus MetricsServer
             if (!_nodeBackupConfiguration.Prometheus.MetricsServer.Enabled) return;
-            _logger.LogInformation("Starting metrics server");
+            _logger.LogInformation(
+                "Starting metrics server on port {0}",
+                _nodeBackupConfiguration.Prometheus.MetricsServer.Port);
             _metricServer = new MetricServer(
-                hostname: "localhost", 
                 port: _nodeBackupConfiguration.Prometheus.MetricsServer.Port, 
                 useHttps: _nodeBackupConfiguration.Prometheus.MetricsServer.UseHttps);
             _metricServer.Start();
@@ -298,17 +299,14 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker
             _logger.LogDebug("Current time is before target start time");
             var nextTargetSeconds = (_nodeBackupConfiguration.Backup.Start.Ticks - DateTime.Now.Ticks) /
                                      TimeSpan.TicksPerSecond;
-
-            if (nextTargetSeconds > _nodeBackupConfiguration.Backup.Interval)
+            
+            while (nextTargetSeconds > _nodeBackupConfiguration.Backup.Interval)
             {
                 nextTargetSeconds -= _nodeBackupConfiguration.Backup.Interval;
-
-                _logger.LogDebug(
-                    "Seconds to next interval : {0}",
-                    nextTargetSeconds.ToString());
             }
 
             nextTargetSeconds++;
+            _logger.LogDebug("Seconds to next interval: {0}", nextTargetSeconds.ToString());
 
             return nextTargetSeconds;
         }
