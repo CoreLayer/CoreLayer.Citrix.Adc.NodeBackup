@@ -59,7 +59,7 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker
             // Configure timer
             _logger.LogDebug("Configuring NodeBackup Timer");
             _timer = new System.Timers.Timer(_nodeBackupConfiguration.Backup.Interval * 1000);
-            _timer.Elapsed += TriggerNodeBackup;
+            _timer.Elapsed += OnBackupTimerElapsed;
 
             // Configure output
             _logger.LogDebug("Configuring Output path");
@@ -89,9 +89,12 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker
                 hostApplicationLifetime.StopApplication();
 
             // Start embedded Prometheus MetricsServer
-            if (!_nodeBackupConfiguration.Prometheus.EnableMetricsServer) return;
+            if (!_nodeBackupConfiguration.Prometheus.MetricsServer.Enabled) return;
             _logger.LogInformation("Starting metrics server");
-            _metricServer = new MetricServer(hostname: "localhost", port: 5001, useHttps: false);
+            _metricServer = new MetricServer(
+                hostname: "localhost", 
+                port: _nodeBackupConfiguration.Prometheus.MetricsServer.Port, 
+                useHttps: _nodeBackupConfiguration.Prometheus.MetricsServer.UseHttps);
             _metricServer.Start();
         }
 
@@ -222,21 +225,21 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker
             _logger.LogDebug("Waiting 5 seconds before starting countdown");
             await Task.Delay(5000, cancellationToken);
             
-            await TriggerExecutionTimer(cancellationToken);
+            await ExecutionLoopAsync(cancellationToken);
             
             _logger.LogInformation("Stopping backup timer");
             _timer.Stop();
         }
 
-        private async Task TriggerExecutionTimer(CancellationToken cancellationToken)
+        private async Task ExecutionLoopAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var nextIntervalCountdown = CalculateNextTargetSeconds();
+                var nextIntervalSeconds = CalculateNextIntervalSeconds();
 
                 if (!_timer.Enabled)
                 {
-                    if (nextIntervalCountdown == 300)
+                    if (nextIntervalSeconds == _nodeBackupConfiguration.Backup.Interval)
                     {
                         _logger.LogInformation("Starting backup timer");
                         _timer.Enabled = true;
@@ -244,60 +247,73 @@ namespace CoreLayer.Citrix.Adc.NodeBackupWorker
                     }
                     else
                     {
-                        _logger.LogInformation("Counting down to backup timer start: {0}",
-                            nextIntervalCountdown.ToString());
+                        _logger.LogInformation("Counting down to backup timer start: {0} at {1} - {2} seconds",
+                            TimeSpan.FromSeconds(nextIntervalSeconds).ToString(@"hh\:mm\:ss"),
+                            TimeSpan.FromSeconds(DateTime.Now.Ticks / TimeSpan.TicksPerSecond + nextIntervalSeconds).ToString(@"hh\:mm\:ss"),
+                            nextIntervalSeconds.ToString());
                     }
                 }
                 else
                 {
-                    _logger.LogDebug("Counting down to next backup: {0}", nextIntervalCountdown.ToString());
+                    _logger.LogInformation("Counting down to next backup: {0} at {1} - {2} seconds",
+                        TimeSpan.FromSeconds(nextIntervalSeconds).ToString(@"hh\:mm\:ss"),
+                        TimeSpan.FromSeconds(DateTime.Now.Ticks / TimeSpan.TicksPerSecond + nextIntervalSeconds).ToString(@"hh\:mm\:ss"),
+                        nextIntervalSeconds.ToString());
                 }
+                
                 await Task.Delay(1000, cancellationToken);
             }
         }
 
-        private long CalculateNextTargetSeconds()
+        private long CalculateNextIntervalSeconds()
         {
-            long nextTargetSeconds;
-            
-            if (DateTime.Now.Ticks / TimeSpan.TicksPerSecond < _nodeBackupConfiguration.Backup.Start.Ticks / TimeSpan.TicksPerSecond)
-            {
-                _logger.LogDebug("Current time is before target start time");
-                nextTargetSeconds = ((_nodeBackupConfiguration.Backup.Start.Ticks - DateTime.Now.Ticks) /
+            return
+                DateTime.Now.Ticks / TimeSpan.TicksPerSecond < _nodeBackupConfiguration.Backup.Start.Ticks / TimeSpan.TicksPerSecond 
+                    ? CalculateIntervalSecondsFromNowToBackupStart() : CalculateIntervalSecondsFromBackupStartToNow();
+        }
+
+        private long CalculateIntervalSecondsFromBackupStartToNow()
+        {
+            _logger.LogDebug("Current time is later than target start time");
+            var nextTargetSeconds = ((DateTime.Now.Ticks - _nodeBackupConfiguration.Backup.Start.Ticks) /
                                      TimeSpan.TicksPerSecond);
-                
-                if (nextTargetSeconds > _nodeBackupConfiguration.Backup.Interval)
-                {
-                    nextTargetSeconds -= _nodeBackupConfiguration.Backup.Interval;
 
-                    _logger.LogDebug(
-                        "Seconds to next interval : {0}",
-                        nextTargetSeconds.ToString());
-                }
-
-                nextTargetSeconds++;
-            }
+            if (nextTargetSeconds < 0)
+                nextTargetSeconds = _nodeBackupConfiguration.Backup.Interval - nextTargetSeconds;
             else
             {
-                _logger.LogDebug("Current time is later than target start time");
-                nextTargetSeconds = ((DateTime.Now.Ticks - _nodeBackupConfiguration.Backup.Start.Ticks) /
-                                     TimeSpan.TicksPerSecond);
+                nextTargetSeconds = _nodeBackupConfiguration.Backup.Interval -
+                                    nextTargetSeconds % _nodeBackupConfiguration.Backup.Interval;
+            }
 
-                if (nextTargetSeconds < 0)
-                    nextTargetSeconds = 300 - nextTargetSeconds;
-                else
-                {
-                    nextTargetSeconds = _nodeBackupConfiguration.Backup.Interval - nextTargetSeconds % _nodeBackupConfiguration.Backup.Interval;
-                }
+            _logger.LogDebug(
+                "Seconds to next interval : {0}",
+                nextTargetSeconds.ToString());
+
+            return nextTargetSeconds;
+        }
+
+        private long CalculateIntervalSecondsFromNowToBackupStart()
+        {
+            _logger.LogDebug("Current time is before target start time");
+            var nextTargetSeconds = (_nodeBackupConfiguration.Backup.Start.Ticks - DateTime.Now.Ticks) /
+                                     TimeSpan.TicksPerSecond;
+
+            if (nextTargetSeconds > _nodeBackupConfiguration.Backup.Interval)
+            {
+                nextTargetSeconds -= _nodeBackupConfiguration.Backup.Interval;
+
                 _logger.LogDebug(
                     "Seconds to next interval : {0}",
                     nextTargetSeconds.ToString());
             }
-            
+
+            nextTargetSeconds++;
+
             return nextTargetSeconds;
         }
 
-        private async void TriggerNodeBackup(Object source, ElapsedEventArgs e)
+        private async void OnBackupTimerElapsed(Object source, ElapsedEventArgs e)
         {
             _logger.LogInformation("Backup was triggered at {0:HH:mm:ss}",
                 e.SignalTime);
